@@ -3,6 +3,7 @@ package com.example.bfhl.controller;
 import com.example.bfhl.model.RequestDto;
 import com.example.bfhl.model.ResponseDto;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +18,11 @@ public class BfhlController {
     private static final String USER_ID     = "ankita_goswami_19062005";
     private static final String EMAIL       = "ankitagoswani230569@acropolis.in";
     private static final String ROLL_NUMBER = "0827CY231013";
+
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
 
     @PostMapping("/bfhl")
     public ResponseEntity<ResponseDto> process(@RequestBody RequestDto request) {
