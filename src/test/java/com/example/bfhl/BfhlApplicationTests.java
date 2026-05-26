@@ -1,54 +1,75 @@
 package com.example.bfhl;
 
+import com.example.bfhl.controller.BfhlController;
 import com.example.bfhl.model.RequestDto;
 import com.example.bfhl.model.ResponseDto;
-import com.example.bfhl.service.BfhlService;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class BfhlApplicationTests {
 
-    @Autowired
-    private BfhlService bfhlService;
+    private final BfhlController controller = new BfhlController();
 
     @Test
-    void contextLoads() {
-        // Verifies the Spring context starts without errors
+    void contextLoads() {}
+
+    @Test
+    void testBasicSeparation() {
+        RequestDto req = new RequestDto();
+        req.setData(Arrays.asList("a", "1", "334", "4", "R", "$"));
+
+        ResponseEntity<ResponseDto> resp = controller.process(req);
+        ResponseDto body = resp.getBody();
+
+        assertNotNull(body);
+        assertTrue(body.isSuccess());
+        assertEquals(List.of("1"), body.getOddNumbers());
+        assertEquals(List.of("334", "4"), body.getEvenNumbers());
+        assertEquals(List.of("A", "R"), body.getAlphabets());
+        assertEquals(List.of("$"), body.getSpecialCharacters());
+        assertEquals("339", body.getSum());
     }
 
     @Test
-    void shouldSeparateNumbersAndAlphabets() {
-        RequestDto request = new RequestDto(Arrays.asList("A", "1", "334", "4", "R"));
-        ResponseDto response = bfhlService.processData(request);
+    void testConcatString() {
+        // ["a","R"] → alphabets=["A","R"] → joined="AR" → reversed="RA"
+        // alternating: R(up) a(lo) = "Ra"
+        RequestDto req = new RequestDto();
+        req.setData(Arrays.asList("a", "R"));
 
-        assertThat(response.isSuccess()).isTrue();
-        assertThat(response.getNumbers()).containsExactly("1", "334", "4");
-        assertThat(response.getAlphabets()).containsExactly("A", "R");
+        ResponseDto body = controller.process(req).getBody();
+        assertNotNull(body);
+        assertEquals("Ra", body.getConcatString());
     }
 
     @Test
-    void shouldIgnoreMixedAndSpecialValues() {
-        RequestDto request = new RequestDto(Arrays.asList("A1", "12B", "@123", "!", "Z", "99"));
-        ResponseDto response = bfhlService.processData(request);
+    void testConcatStringMultiChar() {
+        // ["A","ABCD","DOE"] → joined="AABCDDOE" → reversed="EODDCBAA"
+        // alternating: E o D d C b A a = "EoDdCbAa"
+        RequestDto req = new RequestDto();
+        req.setData(Arrays.asList("A", "ABCD", "DOE"));
 
-        assertThat(response.getNumbers()).containsExactly("99");
-        assertThat(response.getAlphabets()).containsExactly("Z");
+        ResponseDto body = controller.process(req).getBody();
+        assertNotNull(body);
+        assertEquals("EoDdCbAa", body.getConcatString());
     }
 
     @Test
-    void shouldHandleEmptyList() {
-        RequestDto request = new RequestDto(List.of());
-        ResponseDto response = bfhlService.processData(request);
+    void testEmptyData() {
+        RequestDto req = new RequestDto();
+        req.setData(List.of());
 
-        assertThat(response.isSuccess()).isTrue();
-        assertThat(response.getNumbers()).isEmpty();
-        assertThat(response.getAlphabets()).isEmpty();
+        ResponseDto body = controller.process(req).getBody();
+        assertNotNull(body);
+        assertTrue(body.isSuccess());
+        assertEquals("0", body.getSum());
+        assertEquals("", body.getConcatString());
     }
 }
